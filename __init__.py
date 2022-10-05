@@ -21,7 +21,7 @@ bl_info = {
     "name": "Intellisense",
     "author": "Mackraken, tintwotin",
     "version": (0, 3),
-    "blender": (2, 80, 0),
+    "blender": (3, 3, 1),
     "location": "Ctrl + Shift + Space, Edit and Context menus",
     "description": "Adds intellisense to the Text Editor",
     "warning": "",
@@ -31,7 +31,11 @@ bl_info = {
 }
 
 import bpy,pprint
-from console import intellisense
+try:
+    from console import intellisense
+except ModuleNotFoundError:
+    from bl_console_utils.autocomplete import intellisense
+
 from console_python import get_console
 
 
