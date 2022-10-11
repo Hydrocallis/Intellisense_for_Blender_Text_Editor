@@ -20,7 +20,7 @@
 bl_info = {
     "name": "Intellisense",
     "author": "Mackraken, tintwotin",
-    "version": (0, 3),
+    "version": (0, 3, 1),
     "blender": (3, 3, 1),
     "location": "Ctrl + Shift + Space, Edit and Context menus",
     "description": "Adds intellisense to the Text Editor",
@@ -30,9 +30,13 @@ bl_info = {
     "category": "Text Editor",
 }
 
-import bpy,pprint
+import bpy
+
+# The folder location has changed since Blender 3.3, 
+# so switch the module folder location when an error occurs
 try:
     from console import intellisense
+
 except ModuleNotFoundError:
     from bl_console_utils.autocomplete import intellisense
 
@@ -143,13 +147,19 @@ class TEXT_OT_intellisense_options_search(bpy.types.Operator):
         # return context.window_manager.invoke_props_dialog(self)
         sc = context.space_data
         text = sc.text
-        if text.current_character > 0:
+        # If there is nothing on the text screen
+        if text == None:
+            pass
+        # If it is in the text, the process is executed   
+        elif text.current_character > 0:
             result = complete(context)
             text.current_line.body = result[0]
             bpy.ops.text.move(type='LINE_END')
             if result[2] != '':
                 wm = context.window_manager
                 wm.invoke_search_popup(self)
+    
+
         return {'FINISHED'}
 
     @classmethod
