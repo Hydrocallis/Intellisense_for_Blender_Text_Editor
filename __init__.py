@@ -19,10 +19,10 @@
 
 bl_info = {
     "name": "Intellisense",
-    "author": "Mackraken, tintwotin",
-    "version": (0, 3, 1),
+    "author": "Mackraken, tintwotin, Hydrocallis",
+    "version": (0, 3, 2),
     "blender": (3, 3, 1),
-    "location": "Ctrl + Shift + Space, Edit and Context menus",
+    "location": "Ctrl + Shift + Space, Edit and Context menus,Ctrl + Shift + ENTER, send console",
     "description": "Adds intellisense to the Text Editor",
     "warning": "",
     "wiki_url": "",
@@ -83,8 +83,83 @@ def make_enumlists(self,context):
         inte_lists.append((op1,op1,"","",op[0]))
         
     return inte_lists
-    
+        
 
+def ShowMessageBox(message = "", title = "Sendc Console Message", icon = 'INFO'):
+
+    def draw(self, context):
+        self.layout.label(text=message)
+
+    bpy.context.window_manager.popup_menu(draw, title = title, icon = icon)
+
+
+def send_console(context, all=0):
+	
+	sc = context.space_data
+	text = sc.text
+	
+	console = None
+	
+	for area in bpy.context.screen.areas:
+		if area.type=="CONSOLE":
+			from console_python import get_console
+				
+			console = get_console(hash(area.regions[1]))[0]
+            
+	if console==None:
+		return {'FINISHED'}
+	
+	lines = []
+	
+	if all:
+		lines = text.lines
+	else:
+		lines = [text.current_line]
+	
+	space = " "
+	tab = "	"	
+	
+	for l in lines:
+		line = l.body
+		if "=" in line:
+			var = line.split("=")
+			if not "." in var[0] and var[1]!="":
+				# print("push "+line)
+				while line[0]==space or line[0]==tab:
+					line = line[1::]
+			
+				console.push(line)
+				
+			else:
+				# print("not processed")
+				text ="not processed"
+				ShowMessageBox(text) 
+
+		elif "import" in line:
+			console.push(line)
+
+		else:
+			# print("not processed")
+			text ="not processed"
+			ShowMessageBox(text) 
+
+
+class TEXT_OT_intellisense_send_console(bpy.types.Operator):
+	#'''Tooltip'''
+	bl_idname = "text.intellioptions_search_send_console"
+	bl_label = "line send console"
+
+	
+
+
+	def execute(self, context):
+	
+		line=send_console(context)
+		bpy.ops.text.line_break()
+
+		return {'FINISHED'}
+
+	
 class TEXT_OT_intellisense_options(bpy.types.Operator):
     '''Options'''
     bl_idname = "text.intellioptions"
@@ -139,7 +214,7 @@ class TEXT_OT_intellisense_options_search(bpy.types.Operator):
     bl_label = "Intellisense Options"
     bl_property = 'iputtext'
 
-    
+        
     iputtext:bpy.props.EnumProperty(name="test", items=make_enumlists)
 
     # text: bpy.props.StringProperty()
@@ -158,7 +233,7 @@ class TEXT_OT_intellisense_options_search(bpy.types.Operator):
             if result[2] != '':
                 wm = context.window_manager
                 wm.invoke_search_popup(self)
-    
+        
 
         return {'FINISHED'}
 
@@ -282,6 +357,7 @@ class TEXT_OT_Intellisense(bpy.types.Operator):
 
 
 classes = [
+    TEXT_OT_intellisense_send_console,
     TEXT_OT_Intellisense,
     TEXT_OT_intellisense_options,
     TEXT_MT_intellisense_menu,
@@ -296,6 +372,8 @@ def panel_append(self, context):
 
 
 addon_keymaps = []
+
+
 
 
 def register():
@@ -315,6 +393,13 @@ def register():
             ctrl=True,
             shift=True)
         addon_keymaps.append((km, kmi))
+        kmi2 = km.keymap_items.new(
+            "text.intellioptions_search_send_console",
+            type='RET',
+            value='PRESS',
+            ctrl=True,
+            shift=True)
+        addon_keymaps.append((km, kmi2))
 
     bpy.types.TEXT_MT_edit.append(panel_append)
     bpy.types.TEXT_MT_context_menu.append(panel_append)
@@ -330,7 +415,6 @@ def unregister():
 
     bpy.types.TEXT_MT_edit.remove(panel_append)
     bpy.types.TEXT_MT_context_menu.remove(panel_append)
-
 
 if __name__ == "__main__":
     register()
