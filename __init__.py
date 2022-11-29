@@ -556,7 +556,7 @@ def register_keymaps():
             "text.intellioptions_search", #　Only search name is Text Generic. key map disappears when reloading.
             type='SPACE',
             value='PRESS',
-            ctrl=False,
+            ctrl=True,
             shift=True)
 
         addon_intellisense_keymaps.append((km, kmi))
