@@ -241,7 +241,7 @@ class TEXT_AP_intellisense_AddonPreferences(AddonPreferences):
         # layout.prop(self, "filepath")
         # layout.prop(self, "number")
         # layout.prop(self, "boolean")
-        print('###', )
+        # print('###', )
         # pprint.pprint(addon_intellisense_keymaps)
 
     
@@ -258,12 +258,12 @@ class TEXT_AP_intellisense_AddonPreferences(AddonPreferences):
             for kmi_con in km.keymap_items: 
                 # print('###kmi_con',kmi_con)  # key map all set     
                 if kmi_add.idname == kmi_con.idname:
-                    print('###kmi_add.idname',kmi_add.idname)     
+                    # print('###kmi_add.idname',kmi_add.idname)  # The "keymap name of the corresponding add-on" will be displayed.   
 
                     if not kmi_con.id in old_id_l:
                         kmi = kmi_con 
                         old_id_l.append(kmi_con.id) 
-                        print('###old_id_l',old_id_l)     
+                        # print('###old_id_l',old_id_l)  # keymaps di number   
                         break 
             try:
                 if kmi:
