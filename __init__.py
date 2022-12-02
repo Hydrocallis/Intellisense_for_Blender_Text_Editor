@@ -20,8 +20,8 @@
 bl_info = {
     "name": "Intellisense",
     "author": "Mackraken, tintwotin, Hydrocallis",
-    "version": (0, 3, 4),
-    "blender": (3, 3, 1),
+    "version": (0, 3, 5),
+    "blender": (3, 2, 0),
     "location": " Text Editor in Scripting tab> Ctrl + Shift + Space, Edit and Context menus,Ctrl + Shift + ENTER, send console",
     "description": "Adds intellisense to the Text Editor",
     "warning": "",
@@ -29,6 +29,14 @@ bl_info = {
     "tracker_url": "",
     "category": "Development",
 }
+
+
+## チェックリスト
+# bpy.context.window_manager.keyconfigs.addon.keymaps['
+# bpy.context.selected_objcetで数がでるか
+# print(bpy.context)で間がはいるか
+# import bpy
+# form import ができるか
 
 import bpy,pprint
 
@@ -59,7 +67,7 @@ from console_python import get_console
 
 
 def complete(context):
-    righttsliceline =""
+    # righttsliceline =""
 
     sc = context.space_data
     try:
@@ -75,11 +83,22 @@ def complete(context):
         # print('###',console)
 
         line = text.current_line.body
+        print('###line body',line)
         cursor = text.current_character
-        current_position =bpy.context.space_data.text.current_character
+        # 事前処理で[を入れているので検索キャラクターを1段下げる
+        if "[" == line[-1]:
+            cursor-=1
+             # if "[" == line[-1]:
+        #     cursor-=1
+
+                # line=line[linefind:]
+                # print("###linestlip",line)
+
+            # print("##linerfound",line.rfind('import'))
+        # current_position =bpy.context.space_data.text.current_character
         # ここでカーソルより左側のみ抽出する必要がある
         # leftsliceline = line[:current_position]
-        righttsliceline = line[current_position:]
+        # righttsliceline = line[current_position:]
         # print('###line',line)
 
         result = intellisense.expand(line, cursor, console.locals)
@@ -167,12 +186,16 @@ def send_console(context, all=0):
 
         elif "import" in line:
             console.push(line)
+        # elif "if" in line:
+        #     console.push(line)
 
         else:
 
             # print("not processed")
             text ="not processed"
             ShowMessageBox(text) 
+   
+
 
 
 def current_text(context):
@@ -377,12 +400,12 @@ class TEXT_OT_intellisense_search(Operator):
             result = complete(context)
             # 右端削除を元に戻す
             if result[0][-1] ==".":
-                # print('###a',)
+                print('###a',)
                 # .が帰ってきた時
                 text.current_line.body = result[0] + righttbodyline
 
             if result != "":
-                # print('###b',)
+                # print('###b',result[2].split("\n"))
                 if result[2] != "":
                     if result[2].split("\n")[0][-1] =="]":
 
@@ -390,6 +413,7 @@ class TEXT_OT_intellisense_search(Operator):
 
                         text.current_character = len(result[0])
                         text.select_end_character = len(result[0])
+                        print('###bb',)
                     # 候補が２つの場合（.も含む)
                     else:
                         # print('###c',)
@@ -400,10 +424,11 @@ class TEXT_OT_intellisense_search(Operator):
              # 候補が２つの場合（.も含む)
 
             else:
-                # print('###c',)
+                print('###c',)
                 text.current_line.body = leftbodyline + righttbodyline
 
             if result[2] == '':
+                print('###d',)
                 # この場合はドッドになる
                 if result[0][-1] ==".":
                     bpy.ops.text.move(type='NEXT_CHARACTER')
@@ -411,7 +436,7 @@ class TEXT_OT_intellisense_search(Operator):
                 text.current_line.body = result[0] + righttbodyline
                 text.current_character = len(result[0])
                 text.select_end_character = len(result[0])
-            # print('###result',result)
+                print('###result',result)
             
             # リザルトに入ってる場合
             if result[2] != '':
