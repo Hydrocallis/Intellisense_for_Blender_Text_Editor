@@ -53,10 +53,6 @@ from bpy.props import (
                         IntProperty,
                         )
 
-# The folder location has changed since Blender 3.3, 
-# so switch the module folder location when an error occurs
-
-
 
 ######MODULE IMPORT######
 
@@ -98,10 +94,6 @@ if 'bpy' in locals():
     reload_unity_modules(bl_info['name'])
 
 ########################
-
-
-       
-
 
 
 addon_intellisense_keymaps = []
@@ -381,11 +373,6 @@ classes = [
     ]
 
 
-def panel_append(self, context):
-    self.layout.separator()
-    self.layout.menu("TEXT_MT_intellisense_menu")
-
-
 def register_keymaps():
     wm = bpy.context.window_manager
     kc = wm.keyconfigs.addon
@@ -435,9 +422,6 @@ def register():
 
     register_keymaps()
 
-
-    bpy.types.TEXT_MT_edit.append(panel_append)
-    bpy.types.TEXT_MT_context_menu.append(panel_append)
     bpy.types.Scene.intellisense_propertygroup = bpy.props.PointerProperty(type=TEXT_PG_intellisense_PropertyGroup)
 
 
@@ -463,9 +447,6 @@ def unregister():
         bpy.utils.unregister_class(c)
 
     unregister_keymaps()
-
-    bpy.types.TEXT_MT_edit.remove(panel_append)
-    bpy.types.TEXT_MT_context_menu.remove(panel_append)
 
     del bpy.types.Scene.intellisense_propertygroup
 
