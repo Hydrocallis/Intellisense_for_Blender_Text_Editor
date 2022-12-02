@@ -20,7 +20,7 @@
 bl_info = {
     "name": "Intellisense",
     "author": "Mackraken, tintwotin, Hydrocallis",
-    "version": (0, 3, 5),
+    "version": (0, 3, 6),
     "blender": (3, 2, 0),
     "location": " Text Editor in Scripting tab> Ctrl + Shift + Space, Edit and Context menus,Ctrl + Shift + ENTER, send console",
     "description": "Adds intellisense to the Text Editor",
@@ -56,198 +56,52 @@ from bpy.props import (
 # The folder location has changed since Blender 3.3, 
 # so switch the module folder location when an error occurs
 
-try:
-    from console import intellisense
-
-except ModuleNotFoundError:
-    from bl_console_utils.autocomplete import intellisense
-    
-    
-from console_python import get_console
 
 
-def complete(context):
-    # righttsliceline =""
+######MODULE IMPORT######
 
-    sc = context.space_data
-    try:
-        text = sc.text
+from .utils.send_console import send_console
+from .utils.send_text import send_text
+from .utils.complete import complete
+from .utils.text_selection import text_selection
+from .utils.make_enumlists import make_enumlists
 
-        region = context.region
-        for area in context.screen.areas:
-            if area.type == "CONSOLE":
-                region = area.regions[1]
-                break
-
-        console = get_console(hash(region))[0]
-        # print('###',console)
-
-        line = text.current_line.body
-        print('###line body',line)
-        cursor = text.current_character
-        # 事前処理で[を入れているので検索キャラクターを1段下げる
-        if "[" == line[-1]:
-            cursor-=1
-             # if "[" == line[-1]:
-        #     cursor-=1
-
-                # line=line[linefind:]
-                # print("###linestlip",line)
-
-            # print("##linerfound",line.rfind('import'))
-        # current_position =bpy.context.space_data.text.current_character
-        # ここでカーソルより左側のみ抽出する必要がある
-        # leftsliceline = line[:current_position]
-        # righttsliceline = line[current_position:]
-        # print('###line',line)
-
-        result = intellisense.expand(line, cursor, console.locals)
-        # print('###result', )
-        # pprint.pprint(result)
-    except AttributeError:
-        result=""
-        
-    return result
-
-
-def make_enumlists(self,context):
-    
-    inte_lists=[]
-    # options   は検索結果の候補の中身
-    options = complete(bpy.context)
-    # print('###option',options)
-    if options != "":
-        options = options[2].split("\n")
-
-        while("" in options) :
-            options.remove("")
-
-    att = False
-
-    for op in enumerate(options):
-        if op[1].find("attribute")>-1:
-            att = True
-        if not att:
-            op1 = op[1].lstrip()
-        # print('###op',op)
-        inte_lists.append((op1,op1,"","",op[0]))
-        
-    return inte_lists
-        
-
-def ShowMessageBox(message = "", title = "Sendc Console Message", icon = 'INFO'):
-
-    def draw(self, context):
-        self.layout.label(text=message)
-
-    bpy.context.window_manager.popup_menu(draw, title = title, icon = icon)
-
-
-def send_console(context, all=0):
-    
-    sc = context.space_data
-    text = sc.text
-    
-    console = None
-    override = None
-    for area in bpy.context.screen.areas:
-        if area.type=="CONSOLE":
-            override = {'area': area, 'region': area.regions} #override context
-            console = get_console(hash(area.regions[1]))[0]
-            
-    if console==None:
-        return {'FINISHED'}
-    
-    lines = []
-    
-    if all:
-        lines = text.lines
-    else:
-        lines = [text.current_line]
-    
-    space = " "
-    tab = "	"	
-    
-    for l in lines:
-        line = l.body
-        if "=" in line:
-            var = line.split("=")
-            if not "." in var[0] and var[1]!="":
-                # print("push "+line)
-                while line[0]==space or line[0]==tab:
-                    line = line[1::]
-            
-                console.push(line)
-                
-            else:
-                # print("not processed")
-                text ="not processed"
-                ShowMessageBox(text) 
-
-        elif "import" in line:
-            console.push(line)
-        # elif "if" in line:
-        #     console.push(line)
-
-        else:
-
-            # print("not processed")
-            text ="not processed"
-            ShowMessageBox(text) 
+def reload_unity_modules(name):
+    import os
+    import importlib
    
+    utils_modules = sorted([name[:-3] for name in os.listdir(os.path.join(__path__[0], "utils")) if name.endswith('.py')])
+
+    for module in utils_modules:
+        impline = "from . utils import %s" % (module)
+
+        # print("###hydoro unity reloading one %s" % (".".join([name] + ['utils'] + [module])))
+
+        exec(impline)
+        importlib.reload(eval(module))
+
+    modules = []
+
+    for path, module in modules:
+        if path:
+            impline = "from . %s import %s" % (".".join(path), module)
+        else:
+            impline = "from . import %s" % (module)
+
+        print("###hydoro unity reloading second %s" % (".".join([name] + path + [module])))
+
+        exec(impline)
+        importlib.reload(eval(module))
 
 
+if 'bpy' in locals():
+    reload_unity_modules(bl_info['name'])
 
-def current_text(context):
-    if context.area.type == "TEXT_EDITOR":
-        return context.area.spaces.active.text
-
-
-def text_selection(context):
-    txt = current_text(context)
-    sel = ""
+########################
 
 
-    if txt:
+       
 
-        sline = txt.current_line
-        endline = txt.select_end_line
-        endlineincex= txt.select_end_line_index
-        # If only one line is selected
-        if sline == endline: return txt.lines[endlineincex].body
-        # print('###1',txt.lines[endlineincex].body)
-        rec = 0
-        for i, l in enumerate(txt.lines):
-            i=i+1
-            line = l.body + "\n"
-            if l == sline or l==endline:
-                if rec == 0:
-                    rec = 1
-                    sel += line
-                    continue
-            if rec:
-                sel += line
-                if l == sline or l==endline:
-                    break
-    return sel
-
-
-def send_text(context,sel):
-
-    override=None
-    
-    
-    for area in bpy.context.screen.areas:
-        if area.type=="CONSOLE":
-            override = {'area': area, 'region': area.regions} #override context
-
-    # Exit if there is no console screen
-    if override==None:
-        return {'FINISHED'}
-    
-    bpy.ops.console.clear_line(override)
-    bpy.ops.console.insert(override,text=sel)
-    bpy.ops.console.execute(override)
 
 
 addon_intellisense_keymaps = []
@@ -400,7 +254,7 @@ class TEXT_OT_intellisense_search(Operator):
             result = complete(context)
             # 右端削除を元に戻す
             if result[0][-1] ==".":
-                print('###a',)
+                # print('###a',)
                 # .が帰ってきた時
                 text.current_line.body = result[0] + righttbodyline
 
@@ -413,7 +267,7 @@ class TEXT_OT_intellisense_search(Operator):
 
                         text.current_character = len(result[0])
                         text.select_end_character = len(result[0])
-                        print('###bb',)
+                        # print('###bb',)
                     # 候補が２つの場合（.も含む)
                     else:
                         # print('###c',)
@@ -424,11 +278,11 @@ class TEXT_OT_intellisense_search(Operator):
              # 候補が２つの場合（.も含む)
 
             else:
-                print('###c',)
+                # print('###c',)
                 text.current_line.body = leftbodyline + righttbodyline
 
             if result[2] == '':
-                print('###d',)
+                # print('###d',)
                 # この場合はドッドになる
                 if result[0][-1] ==".":
                     bpy.ops.text.move(type='NEXT_CHARACTER')
@@ -436,7 +290,7 @@ class TEXT_OT_intellisense_search(Operator):
                 text.current_line.body = result[0] + righttbodyline
                 text.current_character = len(result[0])
                 text.select_end_character = len(result[0])
-                print('###result',result)
+                # print('###result',result)
             
             # リザルトに入ってる場合
             if result[2] != '':
@@ -602,7 +456,6 @@ def unregister_keymaps():
                 # print('###error',kmi)
                 pass
     addon_intellisense_keymaps.clear()
-
 
 
 def unregister():
