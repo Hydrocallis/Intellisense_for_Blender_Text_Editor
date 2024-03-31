@@ -12,8 +12,6 @@ def console_get():
 
 
 
-
-
 def send_text(context,sel):
 
 

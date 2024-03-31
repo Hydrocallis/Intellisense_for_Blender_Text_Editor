@@ -31,13 +31,6 @@ bl_info = {
 }
 
 
-## チェックリスト
-# bpy.context.window_manager.keyconfigs.addon.keymaps['
-# bpy.context.selected_objcetで数がでるか
-# print(bpy.context)で間がはいるか
-# import bpy
-# form import ができるか
-
 import bpy,pprint
 
 from bpy.types import (
@@ -60,6 +53,7 @@ from .utils.send_console import send_console
 from .utils.send_text import send_text
 from .utils.complete import complete
 from .utils.text_selection import text_selection
+from .utils.get_select_text import get_select_text
 from .utils.make_enumlists import make_enumlists
 
 def reload_unity_modules(name):
@@ -188,10 +182,61 @@ class TEXT_OT_intellisense_send_text(Operator):
             send_text(context,sel)
     
         return {'FINISHED'}
+
+items = [('LEN', "len()", "Get the length of an object",0),
+        ('TYPE', "type()", "Get the type of an object",1),
+        ('LIST_COMPREHENSION', "List Comprehension", "An example of list comprehension",2),
+        ('NONE', "None", "",3)
+       ]
+
+
+def my_callback(scene, context):
+    objs = ([o.name for o in bpy.context.scene.objects])
+    return items
+
+class TEXT_OT_intellisense_send_text_options(Operator):
+    #'''Tooltip'''
+    bl_idname = "text.intellioptions_send_text_options"
+    bl_label = "line send text options"
+    len_type_list_comprehension: bpy.props.EnumProperty(name="Options", description="", items=my_callback) # type: ignore
+    comprehension_option: bpy.props.StringProperty(name="comprehension option", description="", default="") # type: ignore
+
+
+
+    @classmethod
+    def poll(cls, context):
+        if len(bpy.data.texts) != 0:
+            return True 
+    def invoke(self, context, event):   
+        return context.window_manager.invoke_props_dialog(self)
+
+    def draw(self,context):
+        row = self.layout.row(align=True)
+        row.prop(self, 'len_type_list_comprehension', expand=True)  
+        if self.len_type_list_comprehension == "LIST_COMPREHENSION":
+            row =  self.layout.row(align=True)
+            row.prop(self,"comprehension_option")
+    def execute(self, context):
+
+        start_text, select_text, end_text = get_select_text()
+        if self.len_type_list_comprehension == "LEN":
+            add_select_text = "len(" + select_text + ")"
+        elif self.len_type_list_comprehension == "TYPE":
+            add_select_text = "type(" + select_text + ")"
+        elif self.len_type_list_comprehension == "LIST_COMPREHENSION":
+            add_select_text = f"[i{self.comprehension_option} for i in " + select_text + "]"
+        elif self.len_type_list_comprehension == "NONE":
+            add_select_text = select_text
+        else:
+            add_select_text = select_text
+
+        send_text(context, add_select_text)
+
+    
+        return {'FINISHED'}
         
 
 class TEXT_OT_intellisense_send_console(Operator):
-    #'''Tooltip'''
     bl_idname = "text.intellioptions_send_console"
     bl_label = "line send console"
 
@@ -239,8 +284,7 @@ class TEXT_OT_intellisense_search(Operator):
         elif text.current_character > 0:
             leftbodyline=text.current_line.body[:text.current_character]
             righttbodyline=text.current_line.body[text.current_character:]
-            # print("###leftbodyline",leftbodyline)
-            # print("###righttbodyline",righttbodyline)
+
             # コンソールに送るために右端を削除してあげないといけない
             text.current_line.body = leftbodyline
             result = complete(context)
@@ -364,6 +408,7 @@ class TEXT_PT_intellisense_panel(Panel):
 
 
 classes = [
+    TEXT_OT_intellisense_send_text_options,
     TEXT_OT_intellisense_send_text,
     TEXT_OT_intellisense_send_console,
     TEXT_PT_intellisense_panel,
@@ -411,6 +456,18 @@ def register_keymaps():
             ctrl=True,
             shift=True,
             alt=True)
+
+        addon_intellisense_keymaps.append((km, kmi))
+
+        km = wm.keyconfigs.addon.keymaps.new(
+            name='Text', space_type='TEXT_EDITOR')
+        kmi = km.keymap_items.new(
+            "text.intellioptions_send_text_options",
+            type='D',
+            value='PRESS',
+            ctrl=True,
+            shift=True,
+            alt=False)
 
         addon_intellisense_keymaps.append((km, kmi))
 
