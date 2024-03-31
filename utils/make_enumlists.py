@@ -12,14 +12,19 @@ def make_enumlists(self,context):
         while("" in options) :
             options.remove("")
 
-    att = False
+    for index,op in enumerate(options):
+        # 前後の空白を取り除いた文字列を作成
+        op_stripped = op.strip()
+        # もし最後の2文字が']'であれば、']'を含めたまま、その前の文字列を取得
+        if op_stripped[-2:] == "']":
+            op_cleaned = op_stripped
+        else:
+            # "'"と","を取り除いた文字列を作成
+            op_cleaned = op_stripped.replace("'", "").replace(",", "")
+        # 出力リストに追加
+        inte_lists.append((op_cleaned,op_cleaned,"","",index))    
+    # pprint.pprint(inte_lists)
 
-    for op in enumerate(options):
-        if op[1].find("attribute")>-1:
-            att = True
-        if not att:
-            op1 = op[1].lstrip()
-        # print('###op',op)
-        inte_lists.append((op1,op1,"","",op[0]))
-        
+    return inte_lists
+
     return inte_lists
