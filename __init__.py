@@ -19,7 +19,7 @@
 
 bl_info = {
     "name": "Intellisense",
-    "author": "Mackraken, tintwotin, Hydrocallis",
+    "author": "Mackraken, tintwotin, Jose Conseco, Hydrocallis",
     "version": (0, 3, 7),
     "blender": (3, 6, 0),
     "location": " Text Editor in Scripting tab> Ctrl + Shift + Space, Edit and Context menus,Ctrl + Shift + ENTER, send console",
@@ -107,15 +107,15 @@ class TEXT_AP_intellisense_AddonPreferences(AddonPreferences):
     filepath: StringProperty(
         name="Example File Path",
         subtype='FILE_PATH',
-    )
+    ) # type: ignore
     number: IntProperty(
         name="Example Number",
         default=4,
-    )
+    ) # type: ignore
     boolean: BoolProperty(
         name="Example Boolean",
         default=False,
-    )
+    ) # type: ignore
 
     def draw(self, context):
         layout = self.layout
@@ -166,7 +166,7 @@ class TEXT_PG_intellisense_PropertyGroup(PropertyGroup):
                 name = "use send console line break",
                 default = True,
                 description="",
-                )
+                ) # type: ignore
 
 
 class TEXT_OT_intellisense_send_text(Operator):
@@ -225,7 +225,7 @@ class TEXT_OT_intellisense_search(Operator):
 
 
         
-    iputtext:bpy.props.EnumProperty(name="test", items=make_enumlists)
+    iputtext:bpy.props.EnumProperty(name="test", items=make_enumlists) # type: ignore
 
     # text: bpy.props.StringProperty()
     def invoke(self, context, event):   

@@ -27,4 +27,3 @@ def make_enumlists(self,context):
 
     return inte_lists
 
-    return inte_lists
