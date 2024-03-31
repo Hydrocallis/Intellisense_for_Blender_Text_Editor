@@ -20,8 +20,8 @@
 bl_info = {
     "name": "Intellisense",
     "author": "Mackraken, tintwotin, Hydrocallis",
-    "version": (0, 3, 6),
-    "blender": (3, 2, 0),
+    "version": (0, 3, 7),
+    "blender": (3, 6, 0),
     "location": " Text Editor in Scripting tab> Ctrl + Shift + Space, Edit and Context menus,Ctrl + Shift + ENTER, send console",
     "description": "Adds intellisense to the Text Editor",
     "warning": "",
