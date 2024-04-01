@@ -20,7 +20,7 @@
 bl_info = {
     "name": "Intellisense",
     "author": "Mackraken, tintwotin, Jose Conseco, Hydrocallis",
-    "version": (0, 3, 7),
+    "version": (0, 3, 8),
     "blender": (3, 6, 0),
     "location": " Text Editor in Scripting tab> Ctrl + Shift + Space, Edit and Context menus,Ctrl + Shift + ENTER, send console",
     "description": "Adds intellisense to the Text Editor",
@@ -102,21 +102,21 @@ class TEXT_AP_intellisense_AddonPreferences(AddonPreferences):
         name="Example File Path",
         subtype='FILE_PATH',
     ) # type: ignore
-    number: IntProperty(
-        name="Example Number",
-        default=4,
+
+    show_autocomplete_Status: BoolProperty(
+        name="show autocomplete Status",
+        default=True,
     ) # type: ignore
-    boolean: BoolProperty(
-        name="Example Boolean",
-        default=False,
+    use_send_console_line_break_bool: BoolProperty(
+        name="Use send console line break",
+        default=True,
     ) # type: ignore
 
     def draw(self, context):
         layout = self.layout
+        layout.prop(self, "use_send_console_line_break_bool")
+        layout.prop(self, "show_autocomplete_Status")
         layout.label(text="Addon Intellisense Keymaps")
-        # layout.prop(self, "filepath")
-        # layout.prop(self, "number")
-        # layout.prop(self, "boolean")
         # print('###', )
         # pprint.pprint(addon_intellisense_keymaps)
 
@@ -250,13 +250,30 @@ class TEXT_OT_intellisense_send_console(Operator):
     def execute(self, context):
     
         send_console(context)
-        props = context.scene.intellisense_propertygroup
-        if props.use_send_console_line_break_bool == True:
+        addon_prefs = context.preferences.addons[__name__].preferences
+
+        if addon_prefs.use_send_console_line_break_bool == True:
             bpy.ops.text.line_break()
 
         return {'FINISHED'}
 
     
+class TEXT_OT_intellisense_insert(Operator):
+    bl_idname = "text.intellisense_insert"
+    bl_label = "intellisense insert "
+
+    @classmethod
+    def poll(cls, context):
+        if len(bpy.data.texts) != 0:
+            return True 
+        
+    # cmd: StringProperty(default="", options={'HIDDEN'}) # type: ignore
+    snippet: StringProperty(default="", options={'HIDDEN'}) # type: ignore
+
+    def execute(self, context):
+        bpy.ops.text.insert(text=self.snippet)
+        return {'FINISHED'}
+
 class TEXT_OT_intellisense_search(Operator):
     '''Options'''
     bl_idname = "text.intellisense_search"
@@ -387,6 +404,28 @@ class TEXT_OT_intellisense_search(Operator):
         return {'FINISHED'}
 
 
+class TEXT_PT_intellisense_Open_AddonPreferences(bpy.types.Operator):
+    bl_idname = "text_pt_intellisense.open_addonpreferences"
+    bl_label = "Open Addon Preferences"
+
+    cmd: bpy.props.StringProperty(default="", options={'HIDDEN'}) # type: ignore
+
+
+    def execute(self, context):
+
+
+        preferences = bpy.context.preferences
+        addon_prefs = preferences.addons["Intellisense_for_Blender_Text_Editor"].preferences
+
+        bpy.ops.screen.userpref_show("INVOKE_DEFAULT")
+        addon_prefs.active_section = 'ADDONS'
+        bpy.ops.preferences.addon_expand(module = "Intellisense_for_Blender_Text_Editor")
+        bpy.ops.preferences.addon_show(module = "Intellisense_for_Blender_Text_Editor")
+
+
+
+        return {'FINISHED'}
+    
 class TEXT_PT_intellisense_panel(Panel):
     bl_label = "Intellisense"
     bl_space_type = "TEXT_EDITOR"
@@ -396,20 +435,39 @@ class TEXT_PT_intellisense_panel(Panel):
 
     def draw(self, context):
         props = context.scene.intellisense_propertygroup
+        addon_prefs = context.preferences.addons[__name__].preferences
+
         layout = self.layout
+
 
         col = layout.column()
 
+        col.operator('text_pt_intellisense.open_addonpreferences',text="Setting",  icon="TOOL_SETTINGS")
+        col.label(text="")
         col.operator("text.intellisense_search")
         col.operator("text.intellioptions_send_text")
+        col.operator("text.intellioptions_send_text_options")
         sendconsolebox = col.box()
         sendconsolebox.operator("text.intellioptions_send_console")
-        sendconsolebox.prop(props,"use_send_console_line_break_bool")
+        sendconsolebox.prop(addon_prefs,"use_send_console_line_break_bool")
+
+        autocomplete_Status = col.box()
+        autocomplete_Status.label(text="Autocomplete Status")
+        autocomplete_Status.prop(addon_prefs, "show_autocomplete_Status")
+        if addon_prefs.show_autocomplete_Status:
+
+            items=make_enumlists(self,context)
+            for item in items:
+                sele_item=item[0]
+                autocomplete_Status.operator("text.intellisense_insert", text = sele_item,icon="WORDWRAP_ON").snippet = sele_item
+
 
 
 classes = [
+    TEXT_PT_intellisense_Open_AddonPreferences,
     TEXT_OT_intellisense_send_text_options,
     TEXT_OT_intellisense_send_text,
+    TEXT_OT_intellisense_insert,
     TEXT_OT_intellisense_send_console,
     TEXT_PT_intellisense_panel,
     TEXT_OT_intellisense_search,

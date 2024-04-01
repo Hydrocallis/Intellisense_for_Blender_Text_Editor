@@ -29,9 +29,11 @@ def complete(context):
         # print('###line body',line)
         cursor = text.current_character
         # 事前処理で[を入れているので検索キャラクターを1段下げる
-        if "[" == line[-1]:
-            cursor-=1
-   
+        try:
+            if "[" == line[-1]:
+                cursor-=1
+        except IndexError:
+            pass
         result = intellisense.expand(line, cursor, console.locals)
         # print('###result', )
         # pprint.pprint(result)
