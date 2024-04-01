@@ -49,13 +49,6 @@ from bpy.props import (
 
 ######MODULE IMPORT######
 
-from .utils.send_console import send_console
-from .utils.send_text import send_text
-from .utils.complete import complete
-from .utils.text_selection import text_selection
-from .utils.get_select_text import get_select_text
-from .utils.make_enumlists import make_enumlists
-
 def reload_unity_modules(name):
     import os
     import importlib
@@ -88,6 +81,13 @@ if 'bpy' in locals():
     reload_unity_modules(bl_info['name'])
 
 ########################
+
+from .utils.send_console import send_console
+from .utils.send_text import send_text
+from .utils.complete import complete
+from .utils.text_selection import text_selection
+from .utils.get_select_text import get_select_text
+from .utils.make_enumlists import make_enumlists
 
 
 addon_intellisense_keymaps = []
@@ -432,6 +432,14 @@ class TEXT_PT_intellisense_panel(Panel):
     bl_region_type = "UI"
     bl_category = "Text"
 
+    # def modify_selection_item(self, sele_item):
+    #     add_strings=""
+    #     if sele_item[-1] == "]":
+    #         add_strings = "[" 
+    #     if sele_item[-2:] == "']":
+    #         add_strings = "['"
+    #         return add_strings+sele_item
+
 
     def draw(self, context):
         props = context.scene.intellisense_propertygroup
@@ -457,9 +465,13 @@ class TEXT_PT_intellisense_panel(Panel):
         if addon_prefs.show_autocomplete_Status:
 
             items=make_enumlists(self,context)
+            # autocomplete_Status.operator("text.intellisense_insert", text = items[0][2],icon="WORDWRAP_ON").snippet = items[0][2]
+
             for item in items:
+
                 sele_item=item[0]
-                autocomplete_Status.operator("text.intellisense_insert", text = sele_item,icon="WORDWRAP_ON").snippet = sele_item
+
+                autocomplete_Status.operator("text.intellisense_insert", text = sele_item, icon="WORDWRAP_ON").snippet = sele_item
 
 
 

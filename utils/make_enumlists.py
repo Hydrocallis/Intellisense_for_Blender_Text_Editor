@@ -22,7 +22,8 @@ def make_enumlists(self,context):
             # "'"と","を取り除いた文字列を作成
             op_cleaned = op_stripped.replace("'", "").replace(",", "")
         # 出力リストに追加
-        inte_lists.append((op_cleaned,op_cleaned,"","",index))    
+        inte_lists.append((op_cleaned,op_cleaned,"","",index))
+        
     # pprint.pprint(inte_lists)
 
     return inte_lists
