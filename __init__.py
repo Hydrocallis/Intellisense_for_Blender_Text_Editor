@@ -199,7 +199,7 @@ class TEXT_OT_intellisense_send_text_options(Operator):
     bl_idname = "text.intellioptions_send_text_options"
     bl_label = "line send text options"
     len_type_list_comprehension: bpy.props.EnumProperty(name="Options", description="", items=my_callback) # type: ignore
-    comprehension_option: bpy.props.StringProperty(name="comprehension option", description="", default="") # type: ignore
+    comprehension_option: bpy.props.StringProperty(name="comprehension option", description="", default="i") # type: ignore
 
 
 
@@ -216,6 +216,7 @@ class TEXT_OT_intellisense_send_text_options(Operator):
         if self.len_type_list_comprehension == "LIST_COMPREHENSION":
             row =  self.layout.row(align=True)
             row.prop(self,"comprehension_option")
+
     def execute(self, context):
 
         start_text, select_text, end_text = get_select_text()
@@ -224,7 +225,7 @@ class TEXT_OT_intellisense_send_text_options(Operator):
         elif self.len_type_list_comprehension == "TYPE":
             add_select_text = "type(" + select_text + ")"
         elif self.len_type_list_comprehension == "LIST_COMPREHENSION":
-            add_select_text = f"[i{self.comprehension_option} for i in " + select_text + "]"
+            add_select_text = f"[{self.comprehension_option} for i in " + select_text + "]"
         elif self.len_type_list_comprehension == "NONE":
             add_select_text = select_text
         else:
