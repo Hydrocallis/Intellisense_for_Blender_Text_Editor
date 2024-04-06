@@ -20,7 +20,7 @@
 bl_info = {
     "name": "Intellisense",
     "author": "Mackraken, tintwotin, Jose Conseco, Hydrocallis",
-    "version": (0, 3, 8),
+    "version": (0, 3, 9),
     "blender": (3, 6, 0),
     "location": " Text Editor in Scripting tab> Ctrl + Shift + Space, Edit and Context menus,Ctrl + Shift + ENTER, send console",
     "description": "Adds intellisense to the Text Editor",
@@ -98,6 +98,23 @@ class TEXT_AP_intellisense_AddonPreferences(AddonPreferences):
     # when defining this in a submodule of a python package.
     bl_idname = __package__
 
+    def update_category(self, _):
+        try:
+            bpy.utils.unregister_class(TEXT_PT_intellisense_panel)
+        except:
+            pass
+
+        TEXT_PT_intellisense_panel.bl_category = self.code_category
+        bpy.utils.register_class(TEXT_PT_intellisense_panel)
+
+    # Custom panel category
+    code_category: StringProperty(
+        name="Category",
+        description="Category to show Import Any panel",
+        default="Text",
+        update=update_category,
+    ) # type: ignore
+
     filepath: StringProperty(
         name="Example File Path",
         subtype='FILE_PATH',
@@ -117,6 +134,7 @@ class TEXT_AP_intellisense_AddonPreferences(AddonPreferences):
         layout.prop(self, "use_send_console_line_break_bool")
         layout.prop(self, "show_autocomplete_Status")
         layout.label(text="Addon Intellisense Keymaps")
+        layout.prop(self, "code_category")
         # print('###', )
         # pprint.pprint(addon_intellisense_keymaps)
 
@@ -433,13 +451,6 @@ class TEXT_PT_intellisense_panel(Panel):
     bl_region_type = "UI"
     bl_category = "Text"
 
-    # def modify_selection_item(self, sele_item):
-    #     add_strings=""
-    #     if sele_item[-1] == "]":
-    #         add_strings = "[" 
-    #     if sele_item[-2:] == "']":
-    #         add_strings = "['"
-    #         return add_strings+sele_item
 
 
     def draw(self, context):
