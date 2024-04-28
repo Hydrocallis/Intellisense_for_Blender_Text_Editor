@@ -28,6 +28,11 @@ share/python-wheels/
 MANIFEST
 
 
+# .vscodeフォルダを除外
+.vscode/
+
+# intellisense_for_blender_text_editor_updaterフォルダを除外
+intellisense_for_blender_text_editor_updater/
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
