@@ -20,7 +20,7 @@
 bl_info = {
     "name": "Intellisense",
     "author": "Mackraken, tintwotin, Jose Conseco, Hydrocallis",
-    "version": (0, 3, 9),
+    "version": (0, 4, 0),
     "blender": (3, 6, 0),
     "location": " Text Editor in Scripting tab> Ctrl + Shift + Space, Edit and Context menus,Ctrl + Shift + ENTER, send console",
     "description": "Adds intellisense to the Text Editor",
@@ -29,7 +29,6 @@ bl_info = {
     "tracker_url": "",
     "category": "Development",
 }
-
 
 import bpy,pprint
 
@@ -43,11 +42,9 @@ from bpy.types import (
 from bpy.props import (
                         BoolProperty,
                         StringProperty,
-                        IntProperty,
-                        )
+                        IntProperty,                        )
 
-
-######MODULE IMPORT######
+######MODULE IMPORT START######
 
 def reload_unity_modules(name):
     import os
@@ -76,11 +73,10 @@ def reload_unity_modules(name):
         exec(impline)
         importlib.reload(eval(module))
 
-
 if 'bpy' in locals():
     reload_unity_modules(bl_info['name'])
 
-########################
+######MODULE IMPORT END########
 
 from .utils.send_console import send_console
 from .utils.send_text import send_text
@@ -88,15 +84,64 @@ from .utils.complete import complete
 from .utils.text_selection import text_selection
 from .utils.get_select_text import get_select_text
 from .utils.make_enumlists import make_enumlists
-
+from . import addon_updater_ops
 
 addon_intellisense_keymaps = []
 
+def category_initialization():
+    try:
+        bpy.utils.unregister_class(TEXT_PT_intellisense_panel)
 
-class TEXT_AP_intellisense_AddonPreferences(AddonPreferences):
+    except:
+        pass
+    addon_prefs = bpy.context.preferences.addons[__name__].preferences
+
+    TEXT_PT_intellisense_panel.bl_category = addon_prefs.code_category
+    bpy.utils.register_class(TEXT_PT_intellisense_panel)
+
+class UpdaterProps:
+    
+    auto_check_update : bpy.props.BoolProperty(
+		name="Auto-check for Update",
+		description="If enabled, auto-check for updates using an interval",
+		default=False) # type: ignore
+
+    updater_interval_months : bpy.props.IntProperty(
+		name='Months',
+		description="Number of months between checking for updates",
+		default=0,
+		min=0)# type: ignore
+
+    updater_interval_days : bpy.props.IntProperty(
+		name='Days',
+		description="Number of days between checking for updates",
+		default=7,
+		min=0,
+		max=31)# type: ignore
+
+    updater_interval_hours : bpy.props.IntProperty(
+		name='Hours',
+		description="Number of hours between checking for updates",
+		default=0,
+		min=0,
+		max=23)# type: ignore
+
+    updater_interval_minutes : bpy.props.IntProperty(
+		name='Minutes',
+		description="Number of minutes between checking for updates",
+		default=0,
+		min=0,
+		max=59)# type: ignore
+
+class TEXT_AP_intellisense_AddonPreferences(AddonPreferences,UpdaterProps):
     # this must match the add-on name, use '__package__'
     # when defining this in a submodule of a python package.
     bl_idname = __package__
+
+
+
+
+
 
     def update_category(self, _):
         try:
@@ -135,6 +180,11 @@ class TEXT_AP_intellisense_AddonPreferences(AddonPreferences):
         layout.prop(self, "show_autocomplete_Status")
         layout.label(text="Addon Intellisense Keymaps")
         layout.prop(self, "code_category")
+        mainrow = layout.row()
+        col = mainrow.column()
+
+		# Updater draw function, could also pass in col as third arg.
+        addon_updater_ops.update_settings_ui(self, context)
         # print('###', )
         # pprint.pprint(addon_intellisense_keymaps)
 
@@ -171,7 +221,6 @@ class TEXT_AP_intellisense_AddonPreferences(AddonPreferences):
             except UnboundLocalError:
                 print('###error',)
 
-
 class TEXT_PG_intellisense_PropertyGroup(PropertyGroup):
 
     use_send_console_line_break_bool : BoolProperty(
@@ -179,7 +228,6 @@ class TEXT_PG_intellisense_PropertyGroup(PropertyGroup):
                 default = True,
                 description="",
                 ) # type: ignore
-
 
 class TEXT_OT_intellisense_send_text(Operator):
     #'''Tooltip'''
@@ -207,7 +255,6 @@ items = [('LEN', "len()", "Get the length of an object",0),
         ('NONE', "None", "",3)
        ]
 
-
 def my_callback(scene, context):
     objs = ([o.name for o in bpy.context.scene.objects])
     return items
@@ -218,7 +265,6 @@ class TEXT_OT_intellisense_send_text_options(Operator):
     bl_label = "line send text options"
     len_type_list_comprehension: bpy.props.EnumProperty(name="Options", description="", items=my_callback) # type: ignore
     comprehension_option: bpy.props.StringProperty(name="comprehension option", description="", default="i") # type: ignore
-
 
 
     @classmethod
@@ -254,7 +300,6 @@ class TEXT_OT_intellisense_send_text_options(Operator):
     
         return {'FINISHED'}
         
-
 class TEXT_OT_intellisense_send_console(Operator):
     bl_idname = "text.intellioptions_send_console"
     bl_label = "line send console"
@@ -275,7 +320,6 @@ class TEXT_OT_intellisense_send_console(Operator):
             bpy.ops.text.line_break()
 
         return {'FINISHED'}
-
     
 class TEXT_OT_intellisense_insert(Operator):
     bl_idname = "text.intellisense_insert"
@@ -422,7 +466,6 @@ class TEXT_OT_intellisense_search(Operator):
 
         return {'FINISHED'}
 
-
 class TEXT_PT_intellisense_Open_AddonPreferences(bpy.types.Operator):
     bl_idname = "text_pt_intellisense.open_addonpreferences"
     bl_label = "Open Addon Preferences"
@@ -451,6 +494,26 @@ class TEXT_PT_intellisense_panel(Panel):
     bl_region_type = "UI"
     bl_category = "Text"
 
+    def is_len_supported(self, obj):
+            # オブジェクトの型を取得
+            obj_type = type(obj)
+            
+            # 型がlen関数をサポートしているかどうかを確認
+            if hasattr(obj_type, '__len__'):
+                return True,obj_type
+            else:
+                return False,obj_type
+
+        # テスト用のオブジェクト
+        # test_objects = ["Hello", [1, 2, 3], (1, 2, 3), {1: 'a', 2: 'b'}, {1, 2, 3}, b"bytes", bytearray(b"bytes")]
+
+        # # テスト用のオブジェクトに対して実行可能かどうかを確認
+        # for obj in test_objects:
+        #     if is_len_supported(obj):
+        #         print(f"オブジェクト {obj} はlen関数をサポートしています。len={len(obj)}")
+        #     else:
+        #         print(f"オブジェクト {obj} はlen関数をサポートしていません。")
+
 
 
     def draw(self, context):
@@ -474,7 +537,19 @@ class TEXT_PT_intellisense_panel(Panel):
         autocomplete_Status = col.box()
         autocomplete_Status.label(text="Autocomplete Status")
         autocomplete_Status.prop(addon_prefs, "show_autocomplete_Status")
+
+
+        # start_text,select_text,end_text = get_select_text()
+        # code=exec(select_text)
+
+        # result,obj_type = self.is_len_supported(code)
+        # autocomplete_Status.label(text=f"type: {obj_type}")
+        # if result:
+        #     autocomplete_Status.label(text=f"len: {len(obj_type)}")
+
+
         if addon_prefs.show_autocomplete_Status:
+
 
             items=make_enumlists(self,context)
             # autocomplete_Status.operator("text.intellisense_insert", text = items[0][2],icon="WORDWRAP_ON").snippet = items[0][2]
@@ -484,8 +559,6 @@ class TEXT_PT_intellisense_panel(Panel):
                 sele_item=item[0]
 
                 autocomplete_Status.operator("text.intellisense_insert", text = sele_item, icon="WORDWRAP_ON").snippet = sele_item
-
-
 
 classes = [
     TEXT_PT_intellisense_Open_AddonPreferences,
@@ -498,7 +571,6 @@ classes = [
     TEXT_PG_intellisense_PropertyGroup,
     TEXT_AP_intellisense_AddonPreferences,
     ]
-
 
 def register_keymaps():
     wm = bpy.context.window_manager
@@ -553,19 +625,7 @@ def register_keymaps():
 
         addon_intellisense_keymaps.append((km, kmi))
 
-
-def register():
-
-    for c in classes:
-        bpy.utils.register_class(c)
-
-    register_keymaps()
-
-    bpy.types.Scene.intellisense_propertygroup = bpy.props.PointerProperty(type=TEXT_PG_intellisense_PropertyGroup)
-
-
 def unregister_keymaps():
-
     wm = bpy.context.window_manager
     kc = wm.keyconfigs.addon
     if kc:
@@ -580,15 +640,24 @@ def unregister_keymaps():
                 pass
     addon_intellisense_keymaps.clear()
 
+def register():
+    addon_updater_ops.register(bl_info)
+
+    for c in classes:
+        bpy.utils.register_class(c)
+
+    register_keymaps()
+    bpy.types.Scene.intellisense_propertygroup = bpy.props.PointerProperty(type=TEXT_PG_intellisense_PropertyGroup)
+    category_initialization()
 
 def unregister():
+    addon_updater_ops.unregister()
     for c in classes:
         bpy.utils.unregister_class(c)
 
     unregister_keymaps()
 
     del bpy.types.Scene.intellisense_propertygroup
-
 
 if __name__ == "__main__":
     register()
