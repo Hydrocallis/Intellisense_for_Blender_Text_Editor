@@ -20,7 +20,7 @@
 bl_info = {
     "name": "Intellisense",
     "author": "Mackraken, tintwotin, Jose Conseco, Hydrocallis",
-    "version": (0, 4, 0),
+    "version": (0, 4, 1),
     "blender": (3, 6, 0),
     "location": " Text Editor in Scripting tab> Ctrl + Shift + Space, Edit and Context menus,Ctrl + Shift + ENTER, send console",
     "description": "Adds intellisense to the Text Editor",
@@ -84,7 +84,7 @@ from .utils.complete import complete
 from .utils.text_selection import text_selection
 from .utils.get_select_text import get_select_text
 from .utils.make_enumlists import make_enumlists
-from . import addon_updater_ops
+# from . import addon_updater_ops
 
 addon_intellisense_keymaps = []
 
@@ -138,11 +138,6 @@ class TEXT_AP_intellisense_AddonPreferences(AddonPreferences,UpdaterProps):
     # when defining this in a submodule of a python package.
     bl_idname = __package__
 
-
-
-
-
-
     def update_category(self, _):
         try:
             bpy.utils.unregister_class(TEXT_PT_intellisense_panel)
@@ -184,7 +179,7 @@ class TEXT_AP_intellisense_AddonPreferences(AddonPreferences,UpdaterProps):
         col = mainrow.column()
 
 		# Updater draw function, could also pass in col as third arg.
-        addon_updater_ops.update_settings_ui(self, context)
+        # addon_updater_ops.update_settings_ui(self, context)
         # print('###', )
         # pprint.pprint(addon_intellisense_keymaps)
 
@@ -245,25 +240,29 @@ class TEXT_OT_intellisense_send_text(Operator):
         sel=text_selection(context)
         splitlines=str.splitlines(sel)
         for sel in splitlines:
-            send_text(context,sel)
+            if not sel.strip():  # 空文字列またはスペースのみの場合はスキップ
+                continue
+            send_text(context, sel)
+        send_text(context, "\n")
     
         return {'FINISHED'}
 
-items = [('LEN', "len()", "Get the length of an object",0),
+
+
+
+class TEXT_OT_intellisense_send_text_options(Operator):
+
+
+    item = [('LEN', "len()", "Get the length of an object",0),
         ('TYPE', "type()", "Get the type of an object",1),
         ('LIST_COMPREHENSION', "List Comprehension", "An example of list comprehension",2),
         ('NONE', "None", "",3)
        ]
 
-def my_callback(scene, context):
-    objs = ([o.name for o in bpy.context.scene.objects])
-    return items
-
-class TEXT_OT_intellisense_send_text_options(Operator):
     #'''Tooltip'''
     bl_idname = "text.intellioptions_send_text_options"
     bl_label = "line send text options"
-    len_type_list_comprehension: bpy.props.EnumProperty(name="Options", description="", items=my_callback) # type: ignore
+    len_type_list_comprehension: bpy.props.EnumProperty(name="Options", description="", items=item) # type: ignore
     comprehension_option: bpy.props.StringProperty(name="comprehension option", description="", default="i") # type: ignore
 
 
@@ -494,6 +493,11 @@ class TEXT_PT_intellisense_panel(Panel):
     bl_region_type = "UI"
     bl_category = "Text"
 
+    def draw_header(self, context):
+        layout = self.layout
+        layout.label(text="", icon='VIEWZOOM')
+
+
     def is_len_supported(self, obj):
             # オブジェクトの型を取得
             obj_type = type(obj)
@@ -641,7 +645,7 @@ def unregister_keymaps():
     addon_intellisense_keymaps.clear()
 
 def register():
-    addon_updater_ops.register(bl_info)
+    # addon_updater_ops.register(bl_info)
 
     for c in classes:
         bpy.utils.register_class(c)
@@ -651,7 +655,7 @@ def register():
     category_initialization()
 
 def unregister():
-    addon_updater_ops.unregister()
+    # addon_updater_ops.unregister()
     for c in classes:
         bpy.utils.unregister_class(c)
 
